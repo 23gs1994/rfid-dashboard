@@ -168,7 +168,7 @@ def update_visuals(device_id, start_date, end_date):
 )
 
     ])
-    session_fig.update_layout(title="Total Sessions per Device", xaxis_title="Device ID", yaxis_title="Sessions", margin=dict(t=30, b=30), yaxis=dict(range=[0, session_df["total_tag_reads"].max() * 1.2]), uniformtext_minsize=10, uniformtext_mode='show')
+    session_fig.update_layout(title="Total Sessions per Device", xaxis_title="Device ID", yaxis_title="Sessions", margin=dict(t=30, b=30), yaxis=dict(range=[0, session_df["session_count"].max() * 1.2]), uniformtext_minsize=10, uniformtext_mode='show')
 
     # Line Chart
     line_data = []
