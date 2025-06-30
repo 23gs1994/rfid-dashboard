@@ -140,7 +140,7 @@ def update_visuals(device_id, start_date, end_date):
     x=tag_df["device_id_id"],
     y=tag_df["total_tag_reads"],
     text=tag_df["total_tag_reads"],
-    textposition="auto",
+    textposition="outside",
     marker_color="red",
     width=[0.4] * len(tag_df)
 )
@@ -162,7 +162,7 @@ def update_visuals(device_id, start_date, end_date):
     x=session_df["device_id_id"],
     y=session_df["session_count"],
     text=session_df["session_count"],
-    textposition="auto",
+    textposition="outside",
     marker_color="green",
     width=[0.4] * len(session_df)
 )
