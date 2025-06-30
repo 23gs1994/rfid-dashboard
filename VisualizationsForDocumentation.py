@@ -140,13 +140,21 @@ def update_visuals(device_id, start_date, end_date):
     x=tag_df["device_id_id"],
     y=tag_df["total_tag_reads"],
     text=tag_df["total_tag_reads"],
-    textposition="outside",
+    textposition="auto",
     marker_color="red",
     width=[0.4] * len(tag_df)
 )
 
     ])
-    tag_fig.update_layout(title="Total Tag Reads per Device", xaxis_title="Device ID", yaxis_title="Tag Reads", margin=dict(t=30, b=30))
+    tag_fig.update_layout(
+    title="Total Tag Reads per Device",
+    xaxis_title="Device ID",
+    yaxis_title="Tag Reads",
+    margin=dict(t=30, b=30),
+    yaxis=dict(range=[0, tag_df["total_tag_reads"].max() * 1.2]),
+    uniformtext_minsize=10,
+    uniformtext_mode='show'
+)
 
     session_df = filtered.groupby("device_id_id")["int_1"].nunique().reset_index(name="session_count")
     session_fig = go.Figure([
@@ -154,13 +162,13 @@ def update_visuals(device_id, start_date, end_date):
     x=session_df["device_id_id"],
     y=session_df["session_count"],
     text=session_df["session_count"],
-    textposition="outside",
+    textposition="auto",
     marker_color="green",
     width=[0.4] * len(session_df)
 )
 
     ])
-    session_fig.update_layout(title="Total Sessions per Device", xaxis_title="Device ID", yaxis_title="Sessions", margin=dict(t=30, b=30))
+    session_fig.update_layout(title="Total Sessions per Device", xaxis_title="Device ID", yaxis_title="Sessions", margin=dict(t=30, b=30), yaxis=dict(range=[0, session_df["total_tag_reads"].max() * 1.2]), uniformtext_minsize=10, uniformtext_mode='show')
 
     # Line Chart
     line_data = []
