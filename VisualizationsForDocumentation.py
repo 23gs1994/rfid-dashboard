@@ -1,11 +1,13 @@
 import pandas as pd
-import ast
+import ast, os
 import plotly.graph_objs as go
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 
 # Load CSV
-csv_path = r"C:\actionfi\projects\learn_test\learning_agentic_ai\data\tag_data_from_customerdevicedata_table.csv"
+# csv_path = r"C:\actionfi\projects\learn_test\learning_agentic_ai\data\tag_data_from_customerdevicedata_table.csv"
+csv_path = os.path.join(os.path.dirname(__file__), "data", "tag_data_from_customerdevicedata_table.csv")
+# csv_path = r"C:\\actionfi\\projects\\aakash\\testing\\csv_data_downloaded_from_db\\tag_data_ from_customerdevicedata_table-1750942566819.csv"  # IGNORE
 df = pd.read_csv(csv_path, parse_dates=["created_at", "updated_at"])
 
 # Parse JSON
