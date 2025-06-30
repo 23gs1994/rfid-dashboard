@@ -92,7 +92,8 @@ app.layout = html.Div([
 
 
 @app.callback(
-    Output("kpi-output", "children"),
+    Output("kpi-top", "children"),
+    Output("kpi-bottom", "children"),
     Output("bar-tag-reads", "figure"),
     Output("bar-sessions", "figure"),
     Output("line-timestamps", "figure"),
