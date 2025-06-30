@@ -114,6 +114,7 @@ def update_visuals(device_id, start_date, end_date):
             else:
                 total_tag_reads += len(js.get("tags", []))
 
+    total_devices = filtered["device_id_id"].nunique()
     total_sessions = filtered["int_1"].nunique()
     successes = (filtered["char_1"] == "success").sum()
     failures = (filtered["char_1"] == "failed").sum()
@@ -128,6 +129,7 @@ def update_visuals(device_id, start_date, end_date):
         rate_color = "#CB5F30"  # light red
 
     kpi_blocks = [
+        html.Div([html.H6("Total Devices"), html.H4(f"{total_devices}")], style=kpi_style),
         html.Div([html.H6("Total Tag Reads"), html.H4(f"{total_tag_reads}")], style=kpi_style),
         html.Div([html.H6("Total Sessions"), html.H4(f"{total_sessions}")], style=kpi_style),
         html.Div([html.H6("Successes"), html.H4(f"{successes}")], style=kpi_style),
