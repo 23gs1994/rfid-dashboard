@@ -5,7 +5,7 @@ from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 
 # Load CSV
-csv_path = r"C:\\actionfi\\projects\\aakash\\testing\\csv_data_downloaded_from_db\\tag_data_ from_customerdevicedata_table-1750942566819.csv"
+csv_path = r"C:\actionfi\projects\learn_test\learning_agentic_ai\data\tag_data_ from_customerdevicedata_table.csv"
 df = pd.read_csv(csv_path, parse_dates=["created_at", "updated_at"])
 
 # Parse JSON
