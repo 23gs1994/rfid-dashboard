@@ -52,13 +52,23 @@ app.layout = html.Div([
                         style={"marginBottom": "20px"}
                     )
                 ]),
-                html.Div(id="kpi-output", style={
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "gap": "15px",
-                    "padding": "10px"
-                })
-            ], width=3, style={"display": "flex", "flexDirection": "column", "justifyContent": "flex-start"}),
+                html.Div([
+                html.Div(id="kpi-top", style={"display": "flex", "flexDirection": "column", "gap": "15px"}),
+                html.Div(id="kpi-bottom", style={"marginTop": "auto"})  # Bottom-aligned KPI
+                        ], style={
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "flexGrow": "1",
+                            "height": "100%",
+                            "justifyContent": "space-between",
+                            "padding": "10px"
+                        })
+                    ], width=3, style={
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "height": "100%",
+                        "minHeight": "700px"  # Match or exceed chart height
+                    }),
 
             # Right Column: Charts
             dbc.Col([
