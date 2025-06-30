@@ -120,12 +120,24 @@ def update_visuals(device_id, start_date, end_date):
     success_rate = round((successes / (successes + failures)) * 100, 2) if (successes + failures) else 0
 
     kpi_style = {"padding": "10px", "border": "1px solid #ccc", "borderRadius": "8px", "textAlign": "center", "background": "#f8f9fa"}
+    if success_rate >= 90:
+        rate_color = "#4CAF50"  # green
+    elif success_rate >= 50:
+        rate_color = "#FFC107"  # yellow
+    else:
+        rate_color = "#CB5F30"  # light red
+
     kpi_blocks = [
         html.Div([html.H6("Total Tag Reads"), html.H4(f"{total_tag_reads}")], style=kpi_style),
         html.Div([html.H6("Total Sessions"), html.H4(f"{total_sessions}")], style=kpi_style),
         html.Div([html.H6("Successes"), html.H4(f"{successes}")], style=kpi_style),
         html.Div([html.H6("Failures"), html.H4(f"{failures}")], style=kpi_style),
-        html.Div([html.H6("Success Rate (%)"), html.H4(f"{success_rate}")], style=kpi_style)
+        
+        # Add dynamic color style for success rate
+        html.Div(
+            [html.H6("Success Rate (%)"), html.H4(f"{success_rate}")],
+            style={**kpi_style, "backgroundColor": rate_color}
+        )
     ]
 
     # Bar Charts
@@ -137,8 +149,8 @@ def update_visuals(device_id, start_date, end_date):
 
     tag_fig = go.Figure([
         go.Bar(
-    x=tag_df["device_id_id"],
-    y=tag_df["total_tag_reads"],
+    x=tag_df["device_id_id"].astype(str),
+    y=tag_df["total_tag_reads"].astype(str),
     text=tag_df["total_tag_reads"],
     textposition="outside",
     marker_color="red",
@@ -159,8 +171,8 @@ def update_visuals(device_id, start_date, end_date):
     session_df = filtered.groupby("device_id_id")["int_1"].nunique().reset_index(name="session_count")
     session_fig = go.Figure([
         go.Bar(
-    x=session_df["device_id_id"],
-    y=session_df["session_count"],
+    x=session_df["device_id_id"].astype(str),
+    y=session_df["session_count"].astype(str),
     text=session_df["session_count"],
     textposition="outside",
     marker_color="green",
