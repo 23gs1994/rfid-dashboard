@@ -150,7 +150,7 @@ def update_visuals(device_id, start_date, end_date):
     tag_fig = go.Figure([
         go.Bar(
     x=tag_df["device_id_id"].astype(str),
-    y=tag_df["total_tag_reads"].astype(str),
+    y=tag_df["total_tag_reads"],
     text=tag_df["total_tag_reads"],
     textposition="outside",
     marker_color="red",
@@ -172,7 +172,7 @@ def update_visuals(device_id, start_date, end_date):
     session_fig = go.Figure([
         go.Bar(
     x=session_df["device_id_id"].astype(str),
-    y=session_df["session_count"].astype(str),
+    y=session_df["session_count"],
     text=session_df["session_count"],
     textposition="outside",
     marker_color="green",
