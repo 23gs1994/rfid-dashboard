@@ -193,5 +193,6 @@ def update_visuals(device_id, start_date, end_date):
     return kpi_blocks, tag_fig, session_fig, line_fig
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
-    app.run(host="0.0.0.0", port=port, debug=True)
+    # port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
+    # app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(debug=True)  # For local testing, remove in production
