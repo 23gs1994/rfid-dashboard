@@ -13,7 +13,7 @@ df = pd.read_csv(csv_path, parse_dates=["created_at", "updated_at"])
 # Parse JSON
 def parse_json(val):
     try:
-        return ast.literal_eval(val) if isinstance(val, str) else {}
+        return ast.literal_eval(val) if isinstance(val, str) else {} #string to dict conversion
     except Exception:
         return {}
 
