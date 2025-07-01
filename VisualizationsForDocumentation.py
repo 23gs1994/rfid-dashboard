@@ -248,12 +248,13 @@ def update_visuals(start_date, end_date):
 #             margin=dict(t=30, b=30),
 #             hovermode="x unified"
 #         )
-#     else:
-        line_fig = go.Figure()
+    # else:
+    #     line_fig = go.Figure()
 
-    return kpi_blocks[:-1], kpi_blocks[-1], tag_fig, session_fig, line_fig
+    return kpi_blocks[:-1], kpi_blocks[-1], tag_fig
+# , session_fig, line_fig
 
 if __name__ == "__main__":
-    # port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
-    # app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
+    app.run(host="0.0.0.0", port=port, debug=True)
     # app.run(debug=True)  # For local testing
