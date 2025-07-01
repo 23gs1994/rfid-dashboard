@@ -36,13 +36,13 @@ app.layout = html.Div([
             # Left Column: Filters + KPIs
             dbc.Col([
                 html.Div([
-                    html.Label("Select Device ID:"),
-                    dcc.Dropdown(
-                        id="device-dropdown",
-                        options=[{"label": str(i), "value": i} for i in device_options],
-                        placeholder="All Devices",
-                        style={"width": "100%", "marginBottom": "10px"}
-                    ),
+                    # html.Label("Select Device ID:"),
+                    # dcc.Dropdown(
+                    #     id="device-dropdown",
+                    #     options=[{"label": str(i), "value": i} for i in device_options],
+                    #     placeholder="All Devices",
+                    #     style={"width": "100%", "marginBottom": "10px"}
+                    # ),
                     html.Label("Select Date Range:"),
                     dcc.DatePickerRange(
                         id="date-range",
@@ -50,7 +50,7 @@ app.layout = html.Div([
                         start_date=df["json_timestamp"].min().date(),
                         end_date=df["json_timestamp"].max().date(),
                         style={"marginBottom": "20px"}
-                    ) #sdfdsf
+                    )
                 ]),
                 html.Div([
                 html.Div(id="kpi-top", style={"display": "flex", "flexDirection": "column", "gap": "15px"}),
@@ -125,7 +125,7 @@ def update_visuals(device_id, start_date, end_date):
             else:
                 total_tag_reads += len(js.get("tags", []))
 
-    total_devices = filtered["device_id_id"].nunique()
+    # total_devices = filtered["device_id_id"].nunique()
     total_sessions = filtered["int_1"].nunique()
     successes = (filtered["char_1"] == "success").sum()
     failures = (filtered["char_1"] == "failed").sum()
@@ -140,7 +140,7 @@ def update_visuals(device_id, start_date, end_date):
         rate_color = "#CB5F30"  # light red
 
     kpi_blocks = [
-        html.Div([html.H6("Total Devices"), html.H4(f"{total_devices}")], style=kpi_style),
+        # html.Div([html.H6("Total Devices"), html.H4(f"{total_devices}")], style=kpi_style),
         html.Div([html.H6("Total Tag Reads"), html.H4(f"{total_tag_reads}")], style=kpi_style),
         html.Div([html.H6("Total Sessions"), html.H4(f"{total_sessions}")], style=kpi_style),
         html.Div([html.H6("Successes"), html.H4(f"{successes}")], style=kpi_style),
@@ -154,7 +154,13 @@ def update_visuals(device_id, start_date, end_date):
     ]
 
     # Bar Charts
-    tag_df = filtered.groupby("device_id_id").apply(lambda f: sum(
+    # tag_df = filtered.groupby("device_id_id").apply(lambda f: sum(
+    #     int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
+    #     else len(js.get("tags", []))
+    #     for j in f["json_1"]
+    # )).reset_index(name="total_tag_reads")
+
+    tag_df = filtered.apply(lambda f: sum(
         int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
         else len(js.get("tags", []))
         for j in f["json_1"]
@@ -181,7 +187,8 @@ def update_visuals(device_id, start_date, end_date):
     uniformtext_mode='show'
 )
 
-    session_df = filtered.groupby("device_id_id")["int_1"].nunique().reset_index(name="session_count")
+    # session_df = filtered.groupby("device_id_id")["int_1"].nunique().reset_index(name="session_count")
+    session_df = filtered["int_1"].nunique().reset_index(name="session_count")
     session_fig = go.Figure([
         go.Bar(
     x=session_df["device_id_id"].astype(str),
@@ -212,7 +219,7 @@ def update_visuals(device_id, start_date, end_date):
     line_df = pd.DataFrame(line_data)
     if not line_df.empty:
         line_df["time_bin"] = line_df["timestamp"].dt.floor("1h")
-        grouped = line_df.groupby("time_bin")["tag_reads"].sum().reset_index()
+        grouped = line_df["tag_reads"].sum().reset_index()
 
         # Only show labels for top 10% tag_reads values
         threshold = grouped["tag_reads"].quantile(0.90)
