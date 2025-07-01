@@ -50,7 +50,7 @@ app.layout = html.Div([
                         start_date=df["json_timestamp"].min().date(),
                         end_date=df["json_timestamp"].max().date(),
                         style={"marginBottom": "20px"}
-                    )
+                    ) #sdfdsf
                 ]),
                 html.Div([
                 html.Div(id="kpi-top", style={"display": "flex", "flexDirection": "column", "gap": "15px"}),
@@ -244,4 +244,4 @@ def update_visuals(device_id, start_date, end_date):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
     app.run(host="0.0.0.0", port=port, debug=True)
-    # app.run(debug=True)  # For local testing, remove in production
+    # app.run(debug=True)  # For local testing
