@@ -99,8 +99,6 @@ app.layout = html.Div([
     Output("kpi-top", "children"),
     Output("kpi-bottom", "children"),
     Output("bar-tag-reads", "figure"),
-    Output("bar-sessions", "figure"),
-    Output("line-timestamps", "figure"),
     Input("date-range", "start_date"),
     Input("date-range", "end_date")
 )
