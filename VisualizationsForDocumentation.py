@@ -97,7 +97,6 @@ app.layout = html.Div([
     Output("bar-tag-reads", "figure"),
     Output("bar-sessions", "figure"),
     Output("line-timestamps", "figure"),
-    Input("device-dropdown", "value"),
     Input("date-range", "start_date"),
     Input("date-range", "end_date")
 )
