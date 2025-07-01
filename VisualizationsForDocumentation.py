@@ -21,6 +21,10 @@ df["json_1"] = df["json_1"].apply(parse_json)
 df["json_timestamp"] = df["json_1"].apply(
     lambda x: pd.to_datetime(x.get("timestamp"), utc=True) if isinstance(x, dict) and x.get("timestamp") else pd.NaT
 )
+df["year"] = df["json_timestamp"].dt.year
+df["month"] = df["json_timestamp"].dt.month
+df["weekday"] = df["json_timestamp"].dt.day_name()   # e.g., Monday, Tuesday
+df["hour"] = df["json_timestamp"].dt.hour            # 0–23 hour format
 
 # App
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -100,11 +104,13 @@ app.layout = html.Div([
     Input("date-range", "start_date"),
     Input("date-range", "end_date")
 )
-def update_visuals(device_id, start_date, end_date):
+def update_visuals(start_date, end_date):
     filtered = df.copy()
 
-    if device_id:
-        filtered = filtered[filtered["device_id_id"] == device_id]
+    # if device_id:
+    #     filtered = filtered[filtered["device_id_id"] == device_id]
+
+    filtered = filtered[filtered["device_id_id"] == 1]
 
     start_dt = pd.to_datetime(start_date, utc=True)
     end_dt = pd.to_datetime(end_date, utc=True)
@@ -186,68 +192,68 @@ def update_visuals(device_id, start_date, end_date):
     uniformtext_mode='show'
 )
 
-    # session_df = filtered.groupby("device_id_id")["int_1"].nunique().reset_index(name="session_count")
-    session_df = filtered["int_1"].nunique().reset_index(name="session_count")
-    session_fig = go.Figure([
-        go.Bar(
-    x=session_df["device_id_id"].astype(str),
-    y=session_df["session_count"],
-    text=session_df["session_count"],
-    textposition="outside",
-    marker_color="green",
-    width=[0.6] * len(session_df)
-)
+#     # session_df = filtered.groupby("device_id_id")["int_1"].nunique().reset_index(name="session_count")
+#     session_df = filtered["int_1"].nunique().reset_index(name="session_count")
+#     session_fig = go.Figure([
+#         go.Bar(
+#     x=session_df["device_id_id"].astype(str),
+#     y=session_df["session_count"],
+#     text=session_df["session_count"],
+#     textposition="outside",
+#     marker_color="green",
+#     width=[0.6] * len(session_df)
+# )
 
-    ])
-    session_fig.update_layout(title="Total Sessions per Device", xaxis_title="Device ID", yaxis_title="Sessions", margin=dict(t=30, b=30), yaxis=dict(range=[0, session_df["session_count"].max() * 1.2]), uniformtext_minsize=10, uniformtext_mode='show')
+#     ])
+#     session_fig.update_layout(title="Total Sessions per Device", xaxis_title="Device ID", yaxis_title="Sessions", margin=dict(t=30, b=30), yaxis=dict(range=[0, session_df["session_count"].max() * 1.2]), uniformtext_minsize=10, uniformtext_mode='show')
 
-    # Line Chart
-    line_data = []
-    for _, row in filtered.iterrows():
-        js = row["json_1"]
-        ts = js.get("timestamp")
-        if ts:
-            try:
-                ts = pd.to_datetime(ts)
-                count_val = js.get("count", None)
-                count = int(count_val) if count_val not in [None, '', 'null'] else len(js.get("tags", []))
-                line_data.append({"timestamp": ts, "tag_reads": count})
-            except:
-                continue
+#     # Line Chart
+#     line_data = []
+#     for _, row in filtered.iterrows():
+#         js = row["json_1"]
+#         ts = js.get("timestamp")
+#         if ts:
+#             try:
+#                 ts = pd.to_datetime(ts)
+#                 count_val = js.get("count", None)
+#                 count = int(count_val) if count_val not in [None, '', 'null'] else len(js.get("tags", []))
+#                 line_data.append({"timestamp": ts, "tag_reads": count})
+#             except:
+#                 continue
 
-    line_df = pd.DataFrame(line_data)
-    if not line_df.empty:
-        line_df["time_bin"] = line_df["timestamp"].dt.floor("1h")
-        grouped = line_df["tag_reads"].sum().reset_index()
+#     line_df = pd.DataFrame(line_data)
+#     if not line_df.empty:
+#         line_df["time_bin"] = line_df["timestamp"].dt.floor("1h")
+#         grouped = line_df["tag_reads"].sum().reset_index()
 
-        # Only show labels for top 10% tag_reads values
-        threshold = grouped["tag_reads"].quantile(0.90)
-        grouped["label_text"] = grouped["tag_reads"].apply(lambda x: str(x) if x >= threshold else "")
+#         # Only show labels for top 10% tag_reads values
+#         threshold = grouped["tag_reads"].quantile(0.90)
+#         grouped["label_text"] = grouped["tag_reads"].apply(lambda x: str(x) if x >= threshold else "")
 
-        line_fig = go.Figure([
-            go.Scatter(
-                x=grouped["time_bin"],
-                y=grouped["tag_reads"],
-                mode="lines+markers+text",
-                text=grouped["label_text"],  # show only big values
-                textposition="top center",
-                marker=dict(color="blue"),
-                line=dict(color="blue")
-            )
-        ])
-        line_fig.update_layout(
-            title="Tag Reads Over Time",
-            xaxis_title="Time",
-            yaxis_title="Tag Reads",
-            margin=dict(t=30, b=30),
-            hovermode="x unified"
-        )
-    else:
+#         line_fig = go.Figure([
+#             go.Scatter(
+#                 x=grouped["time_bin"],
+#                 y=grouped["tag_reads"],
+#                 mode="lines+markers+text",
+#                 text=grouped["label_text"],  # show only big values
+#                 textposition="top center",
+#                 marker=dict(color="blue"),
+#                 line=dict(color="blue")
+#             )
+#         ])
+#         line_fig.update_layout(
+#             title="Tag Reads Over Time",
+#             xaxis_title="Time",
+#             yaxis_title="Tag Reads",
+#             margin=dict(t=30, b=30),
+#             hovermode="x unified"
+#         )
+#     else:
         line_fig = go.Figure()
 
     return kpi_blocks[:-1], kpi_blocks[-1], tag_fig, session_fig, line_fig
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
-    app.run(host="0.0.0.0", port=port, debug=True)
+    # port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
+    # app.run(host="0.0.0.0", port=port, debug=True)
     # app.run(debug=True)  # For local testing
