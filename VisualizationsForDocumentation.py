@@ -370,7 +370,7 @@ def update_visuals(start_date, end_date):
             yaxis_title="Tag Reads",
             margin=dict(t=30, b=30),
             hovermode="x unified",
-            dragmode="pan",
+            dragmode="pan",#212
             plot_bgcolor="white",        # chart area
     paper_bgcolor="white",       # outer frame
     xaxis=dict(
