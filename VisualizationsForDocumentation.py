@@ -6,16 +6,17 @@ import dash_bootstrap_components as dbc
 
 
 kpi_card_style = {
-    "width": "100%",
-    "minHeight": "80px",
-    "backgroundColor": "#f8f9fa",
-    "padding": "10px",
-    "borderRadius": "8px",
-    "boxShadow": "0px 2px 6px rgba(0, 0, 0, 0.1)",
+    "backgroundColor": "white",
+    "borderRadius": "10px",
+    "boxShadow": "0 2px 6px rgba(0,0,0,0.1)",
+    "padding": "20px",
     "textAlign": "center",
+    "width": "100%",
+    "height": "100px",     # Increase height
     "display": "flex",
     "flexDirection": "column",
-    "justifyContent": "center"
+    "justifyContent": "center",
+    "alignItems": "center"
 }
 
 
@@ -42,7 +43,8 @@ print(df["json_timestamp"].head(5))
 df["year"] = df["json_timestamp"].dt.year.astype("Int64").astype(str)
 df["month"] = df["json_timestamp"].dt.strftime('%b')  # Jan, Feb, etc.
 df["weekday"] = df["json_timestamp"].dt.day_name()    # Monday, Tuesday, etc.
-df["hour"] = df["json_timestamp"].dt.hour.astype("Int64").astype(str).str.zfill(2)  
+df["hour"] = df["json_timestamp"].dt.hour.astype("Int64").astype(str).str.zfill(2)
+df["date"] = df["json_timestamp"].dt.date
 
 # App
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -50,6 +52,7 @@ app.title = "RFID Dashboard"
 
 device_options = sorted(df["device_id_id"].dropna().unique())
 
+# application layout
 app.layout = html.Div([
     html.H2("RFID Device Dashboard", style={"textAlign": "center", "marginTop": "20px"}),
 
@@ -57,31 +60,34 @@ app.layout = html.Div([
         dbc.Row([
             # LEFT COLUMN: Date Picker + Uniform KPIs
             dbc.Col([
-                html.Div([
-                    html.Label("Select Date Range:"),
-                    dcc.DatePickerRange(
-                        id="date-range",
-                        display_format="YYYY-MM-DD",
-                        start_date=df["json_timestamp"].min().date(),
-                        end_date=df["json_timestamp"].max().date(),
-                        style={"marginBottom": "20px"}
-                    ),
-                    html.Div(id="kpi-top", style={
-                        "display": "flex",
-                        "flexDirection": "column",
-                        "gap": "10px",
-                        "alignItems": "stretch"
-                    }),
-                    html.Div(id="kpi-bottom", style={
-                        "marginTop": "10px"
-                    }),
-                ])
-            ], width=3, style={
-                "display": "flex",
-                "flexDirection": "column",
-                "justifyContent": "flex-start",
-                "padding": "10px"
-            }),
+    html.Div([
+        html.Label("Select Date Range:"),
+        dcc.DatePickerRange(
+            id="date-range",
+            display_format="YYYY-MM-DD",
+            start_date=df["json_timestamp"].min().date(),
+            end_date=df["json_timestamp"].max().date(),
+            style={"marginBottom": "20px"}
+        ),
+
+        # Unified KPI block container
+        html.Div(id="kpi-blocks", style={
+            "display": "flex",
+            "flexDirection": "column",
+            "gap": "10px",
+            "flexGrow": "1",
+            "height": "100%",                   # Fill column height
+            "justifyContent": "space-between",  # Even spacing
+        })
+        ])
+    ], width=3, style={
+        "backgroundColor": "#b9b49d",  # light yellow
+        "display": "flex",
+        "flexDirection": "column",
+        "padding": "20px",
+        "height": "100vh",              # Full viewport height
+        "minHeight": "700px"
+    }),
 
                         # RIGHT COLUMN: ALL CHARTS STACKED VERTICALLY
                         # RIGHT COLUMN: CHARTS STACKED VERTICALLY
@@ -99,18 +105,20 @@ app.layout = html.Div([
                     dbc.Col([
                         dcc.Graph(
                             id="yearly-tag-reads",
-                            config={"responsive": True},
-                            style={"height": "400px", "width": "100%"}
+                            config={"responsive": True, "scrollZoom": True},
+                            style={"height": "350px", "width": "100%"}  # Fixed height
                         )
                     ], width=6),
                     dbc.Col([
                         dcc.Graph(
                             id="monthly-tag-reads",
-                            config={"responsive": True},
-                            style={"height": "400px", "width": "100%"}
+                            config={"responsive": True, "scrollZoom": True},
+                            style={"height": "350px", "width": "100%"}  # Same height
                         )
                     ], width=6),
-                ]),dbc.Row([
+                ]),
+
+                dbc.Row([
                     dbc.Col([
                         dcc.Graph(
                             id="weekday-tag-reads",
@@ -135,14 +143,8 @@ app.layout = html.Div([
     ], fluid=True, style={"overflowX": "hidden"})  # <-- Prevents horizontal scroll
 ])
 
-
-
-
-
-
 @app.callback(
-    Output("kpi-top", "children"),
-    Output("kpi-bottom", "children"),
+    Output("kpi-blocks", "children"),   # Updated to single KPI container
     Output("yearly-tag-reads", "figure"),
     Output("monthly-tag-reads", "figure"),
     Output("weekday-tag-reads", "figure"),
@@ -193,12 +195,38 @@ def update_visuals(start_date, end_date):
     else:
         rate_color = "#CB5F30"  # light red
 
+    weekdates = filtered.groupby("date").apply(
+    lambda f: sum(
+        int(js.get("count", len(js.get("tags", []))))
+        if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
+        else len(js.get("tags", []))
+        for j in f["json_1"]
+    )
+).reset_index(name="weekly_total_tag_reads")  # Use this syntax when it's a Series
+
+
+    
+
+    # Get peak weekday (row with max tag reads)
+    peak_weekdate = weekdates.loc[weekdates["weekly_total_tag_reads"].idxmax(), "date"]
+
+    print("peak_weekdate:", peak_weekdate)
+    print(f"peak_weekday:{df[df['date'] == peak_weekdate]['weekday'].iloc[0]}")
+
+    hours = filtered.groupby("hour").apply(lambda f: sum(
+        int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
+        else len(js.get("tags", []))
+        for j in f["json_1"]
+    )).reset_index(name="hourly_total_tag_reads")
+    peak_hour = hours.loc[hours["hourly_total_tag_reads"].idxmax(), "hour"]
+
     kpi_blocks = [
-        # html.Div([html.H6("Total Devices"), html.H4(f"{total_devices}")], style=kpi_style),
         html.Div([html.H6("Total Tag Reads"), html.H4(f"{total_tag_reads}")], style={**kpi_card_style, "backgroundColor": "#f8f9fa"}),
         html.Div([html.H6("Total Sessions"), html.H4(f"{total_sessions}")], style={**kpi_card_style, "backgroundColor": "#f8f9fa"}),
         html.Div([html.H6("Successes"), html.H4(f"{successes}")], style={**kpi_card_style, "backgroundColor": "#f8f9fa"}),
         html.Div([html.H6("Failures"), html.H4(f"{failures}")], style={**kpi_card_style, "backgroundColor": "#f8f9fa"}),
+        html.Div([html.H6("Peak Day"), html.H4(f"{peak_weekdate}, {df[df['date'] == peak_weekdate]['weekday'].iloc[0]}")], style={**kpi_card_style, "backgroundColor": "#f8f9fa"}),
+        html.Div([html.H6("Peak Hour(in 24hr format)"), html.H4(f"{str(int(peak_hour)-1)}-{str(int(peak_hour)+1)}")], style={**kpi_card_style, "backgroundColor": "#f8f9fa"}),
         
         # Add dynamic color style for success rate
         html.Div(
@@ -207,12 +235,14 @@ def update_visuals(start_date, end_date):
         )
     ]
 
+    # Yearly totals
     yearly = filtered.groupby("year").apply(lambda f: sum(
         int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
         else len(js.get("tags", []))
         for j in f["json_1"]
     )).reset_index(name="yearly_total_tag_reads")
 
+    # Monthly averages
     monthly = filtered.groupby(["year", "month"]).apply(lambda f: sum(
     int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
     else len(js.get("tags", []))
@@ -220,6 +250,7 @@ def update_visuals(start_date, end_date):
     )).reset_index(name="monthly_total_tag_reads")
     monthly_avg = monthly.groupby("month")["monthly_total_tag_reads"].mean().reset_index()
 
+    # Weekly averages
     weekday = filtered.groupby("weekday").apply(lambda f: sum(
         int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
         else len(js.get("tags", []))
@@ -227,6 +258,7 @@ def update_visuals(start_date, end_date):
     )).reset_index(name="weekly_total_tag_reads")
     weekly_avg = weekday.groupby("weekday")["weekly_total_tag_reads"].mean().reset_index()
 
+    # Calculate hourly averages
     hourly = filtered.groupby("hour").apply(lambda f: sum(
         int(js.get("count", len(js.get("tags", [])))) if isinstance(js := j, dict) and js.get("count") not in [None, '', 'null']
         else len(js.get("tags", []))
@@ -234,8 +266,8 @@ def update_visuals(start_date, end_date):
     )).reset_index(name="hourly_total_tag_reads")
     hourly_avg = hourly.groupby("hour")["hourly_total_tag_reads"].mean().reset_index()
     
-
-    # # Stacked bar for month with years
+    ## Chart creation
+    # 1.Stacked bar for month with years
     month_fig = go.Figure()
     month_fig.add_trace(go.Bar(
         x=monthly_avg["month"],
@@ -252,85 +284,85 @@ def update_visuals(start_date, end_date):
         margin=dict(t=30, b=30),
         dragmode='pan',
         plot_bgcolor="white",        # chart area
-    xaxis=dict(
-        gridcolor="#e6e6e6",     # light gray grid lines
-        zerolinecolor="#cccccc"
-    ),
-    yaxis=dict(
-        gridcolor="#e6e6e6",
-        zerolinecolor="#cccccc"
-    ),
-    )
-
-
-
-    # Bar charts for year, weekday, and hour
+        xaxis=dict(
+            gridcolor="#e6e6e6",     # light gray grid lines
+            zerolinecolor="#cccccc"
+        ),
+        yaxis=dict(
+            gridcolor="#e6e6e6",
+            zerolinecolor="#cccccc"
+        ),
+                          )
+    # 2.Bar charts for year, weekday, and hour
     year_fig = go.Figure([go.Bar(x=yearly["year"], y=yearly["yearly_total_tag_reads"], marker_color='blue',textposition="outside")])
-    year_fig.update_layout(title="Tag Reads per Year",barmode='stack',dragmode='pan', plot_bgcolor="white",        # chart area
-    paper_bgcolor="white",       # outer frame
-    xaxis=dict(
-        gridcolor="#e6e6e6",     # light gray grid lines
-        zerolinecolor="#cccccc"
-    ),
-    yaxis=dict(
-        gridcolor="#e6e6e6",
-        zerolinecolor="#cccccc"
-    ),)
+    year_fig.update_layout(title="Tag Reads per Year",
+                            barmode='stack',
+                            dragmode='pan', 
+                            plot_bgcolor="white",        # chart area
+                            paper_bgcolor="white",       # outer frame
+                            xaxis=dict(
+                                gridcolor="#e6e6e6",     # light gray grid lines
+                                zerolinecolor="#cccccc"
+                            ),
+                            yaxis=dict(
+                                gridcolor="#e6e6e6",
+                                zerolinecolor="#cccccc"
+                            ),)
 
     weekday_fig = go.Figure()
     weekday_fig.add_trace(go.Bar(
-        x=weekly_avg["weekday"],
-        y=weekly_avg["weekly_total_tag_reads"],
-        marker_color="steelblue",
-        text=weekly_avg["weekly_total_tag_reads"].round(2),
-        textposition="outside"
+                            x=weekly_avg["weekday"],
+                            y=weekly_avg["weekly_total_tag_reads"],
+                            marker_color="steelblue",
+                            text=weekly_avg["weekly_total_tag_reads"].round(2),
+                            textposition="outside"
     ))
     weekday_fig.update_layout(
-        title="Average Tag Reads per weekday (Across Years)",
-        xaxis_title="Weekday",
-        yaxis_title="Average Tag Reads",
-        margin=dict(t=30, b=30),
-        dragmode='pan', plot_bgcolor="white",        # chart area
-    paper_bgcolor="white",       # outer frame
-    xaxis=dict(
-        gridcolor="#e6e6e6",     # light gray grid lines
-        zerolinecolor="#cccccc"
-    ),
-    yaxis=dict(
-        gridcolor="#e6e6e6",
-        zerolinecolor="#cccccc"
-    ),
-    )
+                            title="Average Tag Reads per weekday (Across Years)",
+                            xaxis_title="Weekday",
+                            yaxis_title="Average Tag Reads",
+                            margin=dict(t=30, b=30),
+                            dragmode='pan', plot_bgcolor="white",        # chart area
+                            paper_bgcolor="white",       # outer frame
+                            xaxis=dict(
+                                gridcolor="#e6e6e6",     # light gray grid lines
+                                zerolinecolor="#cccccc"
+                            ),
+                            yaxis=dict(
+                                gridcolor="#e6e6e6",
+                                zerolinecolor="#cccccc"
+                            ),
+                        )
 
     hour_fig = go.Figure()
     hour_fig.add_trace(go.Scatter(
-        x=hourly_avg["hour"],
-        y=hourly_avg["hourly_total_tag_reads"],
-        mode="lines+markers+text",  # Enable text annotations
-        line=dict(color="steelblue"),
-        name="Avg Tag Reads",
-        text=hourly_avg["hourly_total_tag_reads"],  # Show the value as label
-        textposition="top center"  # <-- valid for Scatter
+                            x=hourly_avg["hour"],
+                            y=hourly_avg["hourly_total_tag_reads"],
+                            mode="lines+markers+text",  # Enable text annotations
+                            line=dict(color="steelblue"),
+                            name="Avg Tag Reads",
+                            text=hourly_avg["hourly_total_tag_reads"],  # Show the value as label
+                            textposition="top center"  # <-- valid for Scatter
     ))
     hour_fig.update_layout(
-        title="Average Tag Reads per Hour (Across Years)",
-        xaxis_title="Hour",
-        yaxis_title="Average Tag Reads",
-        margin=dict(t=30, b=30),
-        dragmode="pan",
-        plot_bgcolor="white",        # chart area
-    paper_bgcolor="white",       # outer frame
-    xaxis=dict(
-        gridcolor="#e6e6e6",     # light gray grid lines
-        zerolinecolor="#cccccc"
-    ),
-    yaxis=dict(
-        gridcolor="#e6e6e6",
-        zerolinecolor="#cccccc"
-    ),
-    )
+                            title="Average Tag Reads per Hour (Across Years)",
+                            xaxis_title="Hour",
+                            yaxis_title="Average Tag Reads",
+                            margin=dict(t=30, b=30),
+                            dragmode="pan",
+                            plot_bgcolor="white",        # chart area
+                            paper_bgcolor="white",       # outer frame
+                            xaxis=dict(
+                                gridcolor="#e6e6e6",     # light gray grid lines
+                                zerolinecolor="#cccccc"
+                            ),
+                            yaxis=dict(
+                                gridcolor="#e6e6e6",
+                                zerolinecolor="#cccccc"
+                            ),
+                        )
 
-    # Line Chart
+    # 3.Line Chart
     line_data = []
     for _, row in filtered.iterrows():
         js = row["json_1"]
@@ -372,20 +404,20 @@ def update_visuals(start_date, end_date):
             hovermode="x unified",
             dragmode="pan",#212
             plot_bgcolor="white",        # chart area
-    paper_bgcolor="white",       # outer frame
-    xaxis=dict(
-        gridcolor="#e6e6e6",     # light gray grid lines
-        zerolinecolor="#cccccc"
-    ),
-    yaxis=dict(
-        gridcolor="#e6e6e6",
-        zerolinecolor="#cccccc"
-    ),
-        )
+            paper_bgcolor="white",       # outer frame
+            xaxis=dict(
+                gridcolor="#e6e6e6",     # light gray grid lines
+                zerolinecolor="#cccccc"
+            ),
+            yaxis=dict(
+                gridcolor="#e6e6e6",
+                zerolinecolor="#cccccc"
+            ),
+                )
     else:
         line_fig = go.Figure()
 
-    return kpi_blocks[:-1], kpi_blocks[-1], year_fig, month_fig, weekday_fig, hour_fig, line_fig
+    return kpi_blocks, year_fig, month_fig, weekday_fig, hour_fig, line_fig
 
 
 if __name__ == "__main__":
