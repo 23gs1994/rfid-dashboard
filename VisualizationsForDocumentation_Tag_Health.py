@@ -910,6 +910,6 @@ def update_visuals_for_Health(start_date, end_date):
 
 
 if __name__ == "__main__":
-    # port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
-    # app.run(host="0.0.0.0", port=port, debug=True)
-    app.run(debug=True)  # For local testing
+    port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
+    app.run(host="0.0.0.0", port=port, debug=True)
+    # app.run(debug=True)  # For local testing
