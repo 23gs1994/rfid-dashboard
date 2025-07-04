@@ -1099,6 +1099,6 @@ def get_hour_range(hour):
 
 
 if __name__ == "__main__":
-    # port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
-    # app.run(host="0.0.0.0", port=port, debug=True)
-    app.run(debug=True)  # For local testing
+    port = int(os.environ.get("PORT", 8050))  # Use PORT from Render if available
+    app.run(host="0.0.0.0", port=port, debug=True)
+    # app.run(debug=True)  # For local testing
